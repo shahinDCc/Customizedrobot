@@ -1,149 +1,169 @@
-@font-face {
-    font-family: 'iransans';
-    src: url('IRANSans.ttf');
+/* استفاده از متغیرهای CSS */
+:root {
+    --font-family-main: 'iransans', sans-serif;
+    --color-background: #172b4d;
+    --color-text: #000;
+    --color-highlight: #345987;
+    --color-secondary-bg: #f7f0f5;
+    --border-radius: 10px;
+    --line-height: 1.8;
+    --font-size-base: 16px;
+    --padding-base: 10px;
+    --color-border: #ccc;
+    --hover-highlight: #2d486e;
+    --shadow-light: 0 4px 10px rgba(0, 0, 0, 0.1);
+    --progress-bar-bg: #eee;
 }
+
 * {
     margin: 0;
     padding: 0;
+    box-sizing: border-box;
 }
 
 body {
-    font-family: 'iransans' !important;
-    line-height: 30px;
-    background: #172b4d;
+    font-family: var(--font-family-main);
+    line-height: var(--line-height);
+    background-color: var(--color-background);
+    color: var(--color-text);
     direction: rtl;
+    text-align: center;
+    padding: 15px;
 }
 
 .container {
     width: 80%;
     margin: 20px auto;
     position: relative;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
 }
 
 #contact input[type="text"],
 #contact button[type="submit"] {
-    font: 500 16px/25px 'iransans';
+    font-size: var(--font-size-base);
+    font-family: var(--font-family-main);
+    line-height: 1.6;
 }
 
-.contactw {
-    background: #f7f0f5;
-    /*padding: 25px;*/
-    /*box-shadow: 0 0 20px 0 rgba(0, 0, 0, 0.2), 0 5px 5px 0 rgba(0, 0, 0, 0.24);*/
-    /*border-radius: 15px !important;*/
-}
-
-fieldset {
-    border: medium none !important;
-    margin: 0 0 10px;
-    min-width: 100%;
-    padding: 0;
+#contact input[type="text"] {
     width: 100%;
-}
-
-#contact input[type="text"]
-{
-    width: 100%;
-    border: 1px solid #ccc;
-    border-radius: 10px;
+    border: 1px solid var(--color-border);
+    border-radius: var(--border-radius);
     background: #FFF;
-    margin: 0 0 2px;
-    padding: 6px;
+    padding: var(--padding-base);
     font-size: 14px;
+    margin-bottom: 10px;
+    transition: border 0.3s;
+}
+
+#contact input[type="text"]:focus {
+    border: 1px solid var(--color-highlight);
+    outline: none;
 }
 
 #contact button[type="submit"] {
     cursor: pointer;
     width: 100%;
     border: none;
-    background: #345987;
+    background: var(--color-highlight);
     color: #FFF;
-    margin: 0 0 5px;
-    padding: 10px;
+    padding: var(--padding-base);
     font-size: 15px;
+    border-radius: var(--border-radius);
+    transition: background 0.3s, transform 0.2s;
 }
-body{
-    direction: rtl;
-    padding-top: 15px;
-    text-align: center;
+
+#contact button[type="submit"]:hover {
+    background: var(--hover-highlight);
+    transform: scale(1.05);
 }
+
+.contactw {
+    background: var(--color-secondary-bg);
+    border-radius: var(--border-radius);
+    padding: var(--padding-base);
+    box-shadow: var(--shadow-light);
+}
+
+fieldset {
+    border: none;
+    margin-bottom: 15px;
+    padding: 0;
+}
+
 p {
-    line-height: 40px;
-    color: black;
+    line-height: 2;
+    color: var(--color-text);
 }
+
 span {
     margin-right: 5px;
     color: green;
 }
-.tarikh{
+
+.tarikh {
     direction: ltr !important;
 }
-.container div {
-    display: flex;
-    justify-content: center
-}
-.container div div{
-    display: block;
-}
+
 #__next section {
-    min-height:100vh;
+    min-height: 100vh;
     display: flex;
-    justify-content: center!important;
-    background-color: #172b4d;
+    justify-content: center;
+    align-items: center;
+    background-color: var(--color-background);
     direction: rtl;
 }
+
 #__next main {
     display: flex;
-    flex-direction: column!important;
-    align-items: center!important;
-    justify-content: center!important;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
 }
+
 .div1 {
     background-color: #fff;
-    border-radius: 5px;
+    border-radius: var(--border-radius);
     padding: 20px;
-    position: relative;
-    display: block;
-    flex: 0 0 50.83333333%;
-    max-width: 50.83333333%;
-    right: auto;
-    left: auto;
+    flex: 0 0 50%;
+    max-width: 50%;
+    display: flex;
+    justify-content: center;
     align-items: center;
-    display: flex;
-    justify-content: center!important;
+    box-shadow: var(--shadow-light);
 }
-.div2 {
-    padding-bottom: 2rem!important;
-    padding-top: 2rem!important;
-    align-items: center!important;
-    display: flex;
-    color: #e31b23;
-    flex-direction: column!important;
-}
-.ant-layout1 {
-    background: #f0f2f5;
-    display: flex;
-    flex: auto;
-    flex-direction: column;
-    min-height: 0;
-}
-.PayPing-layout1 {
-    background-color: #fff;
-}
-.w-100 {
-    width: 100%
-}
-.align-center {
-    align-items: center!important;display: flex;
-}
-.justify-center {
-    display: flex;justify-content: center!important;
-}
-.progress-bar {
-  display: flex;
-  justify-content: center;
-  align-items: center;
 
-  width: 150px;
-  height: 150px;
-  border-radius: 50%;
+.div2 {
+    padding: 2rem 0;
+    color: #e31b23;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.align-center {
+    display: flex;
+    align-items: center;
+}
+
+.justify-center {
+    display: flex;
+    justify-content: center;
+}
+
+.progress-bar {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 150px;
+    height: 150px;
+    border-radius: 50%;
+    background: var(--progress-bar-bg);
+    transition: background 0.3s;
+}
+
+.progress-bar:hover {
+    background: var(--color-secondary-bg);
 }
