@@ -1,222 +1,135 @@
 #!/bin/bash
 
 # Written By: wizwiz
+# Improved By: YourName
 
-if [ "$(id -u)" -ne 0 ]; then
-    echo -e "\033[33mPlease run as root\033[0m"
-    exit
-fi
+# Function to check if script is run as root
+check_root() {
+    if [ "$(id -u)" -ne 0 ]; then
+        echo -e "\033[33mError: This script must be run as root.\033[0m"
+        exit 1
+    fi
+}
 
-wait
+# Function to install required packages
+install_packages() {
+    local packages=(git wget unzip curl)
+    for package in "${packages[@]}"; do
+        if ! dpkg -l | grep -q "^ii  $package "; then
+            sudo apt-get install -y "$package"
+            if [ $? -ne 0 ]; then
+                echo -e "\e[41mError: Failed to install $package. Please check your internet connection and package manager.\033[0m"
+                exit 1
+            fi
+        fi
+    done
+}
 
-echo " "
+# Function to send a message via Telegram bot
+send_telegram_message() {
+    local bot_token=$1
+    local chat_id=$2
+    local message=$3
 
-PS3=" Please Select Action: "
-options=("Update bot" "Update panel" "Backup" "Delete" "Donate" "Exit")
-select opt in "${options[@]}"
-do
-	case $opt in
-		"Update bot")
-			echo " "
-			read -p "Are you sure you want to update?[y/n]: " answer
-			echo " "
-			if [ "$answer" != "${answer#[Yy]}" ]; then
-			mv /var/www/html/wizwizxui-timebot/baseInfo.php /root/
-			sudo apt-get install -y git
-			sudo apt-get install -y wget
-			sudo apt-get install -y unzip
-			sudo apt install curl -y
-			echo -e "\n\e[92mUpdating ...\033[0m\n"
-			sleep 4
-			rm -r /var/www/html/wizwizxui-timebot/
-			echo -e "\n\e[92mWait a few seconds ...\033[0m\n"
-			sleep 3
-			git clone https://github.com/wizwizdev/wizwizxui-timebot.git /var/www/html/wizwizxui-timebot
-			sudo chown -R www-data:www-data /var/www/html/wizwizxui-timebot/
-			sudo chmod -R 755 /var/www/html/wizwizxui-timebot/
-			sleep 3
-			mv /root/baseInfo.php /var/www/html/wizwizxui-timebot/
+    response=$(curl -s -w "%{http_code}" -o /dev/null -X POST "https://api.telegram.org/bot${bot_token}/sendMessage" \
+        -d chat_id="${chat_id}" \
+        -d text="${message}" \
+        -d parse_mode="html")
 
-			sleep 1
+    if [ "$response" -ne 200 ]; then
+        echo -e "\e[41mError: Failed to send Telegram message. HTTP response code: $response.\033[0m"
+    fi
+}
 
-   		db_namewizwiz=$(cat /var/www/html/wizwizxui-timebot/baseInfo.php | grep '$dbName' | cut -d"'" -f2)
-		  db_userwizwiz=$(cat /var/www/html/wizwizxui-timebot/baseInfo.php | grep '$dbUserName' | cut -d"'" -f2)
-		  db_passwizwiz=$(cat /var/www/html/wizwizxui-timebot/baseInfo.php | grep '$dbPassword' | cut -d"'" -f2)
-			bot_token=$(cat /var/www/html/wizwizxui-timebot/baseInfo.php | grep '$botToken' | cut -d"'" -f2)
-			bot_token2=$(cat /var/www/html/wizwizxui-timebot/baseInfo.php | grep '$botToken' | cut -d'"' -f2)
-			bot_url=$(cat /var/www/html/wizwizxui-timebot/baseInfo.php | grep '$botUrl' | cut -d'"' -d"'" -f2)
-			
-			filepath="/var/www/html/wizwizxui-timebot/baseInfo.php"
-			
-			bot_value=$(cat $filepath | grep '$admin =' | sed 's/.*= //' | sed 's/;//')
-			
-                        MESSAGE="🤖 WizWiz robot has been successfully updated! "$'\n\n'"🔻token: <code>${bot_token}</code>"$'\n'"🔻admin: <code>${bot_value}</code> "$'\n'"🔻phpmyadmin: <code>https://domain.com/phpmyadmin</code>"$'\n'"🔹db name: <code>${db_namewizwiz}</code>"$'\n'"🔹db username: <code>${db_userwizwiz}</code>"$'\n'"🔹db password: <code>${db_passwizwiz}</code>"$'\n\n'"📢 @wizwizch "
-			
-   			curl -s -X POST "https://api.telegram.org/bot${bot_token}/sendMessage" -d chat_id="${bot_value}" -d text="$MESSAGE" -d parse_mode="html"
-			
-			curl -s -X POST "https://api.telegram.org/bot${bot_token2}/sendMessage" -d chat_id="${bot_value}" -d text="$MESSAGE" -d parse_mode="html"
-			
-			sleep 1
-        
-			url="${bot_url}install/install.php?updateBot"
-			curl $url
+# Function to securely update the bot
+update_bot() {
+    echo " "
+    read -p "Are you sure you want to update? [y/n]: " answer
+    echo " "
+    if [[ "$answer" =~ ^[Yy]$ ]]; then
+        local base_info_path="/var/www/html/wizwizxui-timebot/baseInfo.php"
 
-   			url3="${bot_url}install/install.php?updateBot"
-			curl $url3
+        if [ ! -f "$base_info_path" ]; then
+            echo -e "\e[41mError: baseInfo.php not found at $base_info_path. Update aborted.\033[0m"
+            exit 1
+        fi
 
-   			echo -e "\n\e[92mUpdating ...\033[0m\n"
-      
-			sleep 2
+        mv "$base_info_path" /root/
 
-   
-			sudo rm -r /var/www/html/wizwizxui-timebot/webpanel
-			sudo rm -r /var/www/html/wizwizxui-timebot/install
-			rm /var/www/html/wizwizxui-timebot/createDB.php
-			rm /var/www/html/wizwizxui-timebot/updateShareConfig.php
-			rm /var/www/html/wizwizxui-timebot/README.md
-			rm /var/www/html/wizwizxui-timebot/README-fa.md
-			rm /var/www/html/wizwizxui-timebot/LICENSE
-			rm /var/www/html/wizwizxui-timebot/update.sh
-			rm /var/www/html/wizwizxui-timebot/wizwiz.sh
-  			rm /var/www/html/wizwizxui-timebot/tempCookie.txt
-  			rm /var/www/html/wizwizxui-timebot/settings/messagewizwiz.json
-			clear
-			
-			echo -e "\n\e[92mThe script was successfully updated! \033[0m\n"
-			
-			else
-			  echo -e "\e[41mCancel the update.\033[0m\n"
-			fi
+        install_packages
 
-			break ;;
-		
-		"Update panel")
-			echo " "
-			read -p "Are you sure you want to update?[y/n]: " answer
-			echo " "
-			if [ "$answer" != "${answer#[Yy]}" ]; then
-   
-			wait
-   			cd /var/www/html/ && find . -mindepth 1 -maxdepth 1 ! -name wizwizxui-timebot -type d -exec rm -r {} \;
+        echo -e "\n\e[92mUpdating...\033[0m\n"
+        sleep 2
 
-	 		touch /var/www/html/index.html
-    			echo "<!DOCTYPE html><html><head><title>My Website</title></head><body><h1>Hello, world!</h1></body></html>" > /var/www/html/index.html
-       
-			
-			    
-			        
-			RANDOM_CODE=$(LC_CTYPE=C tr -dc 'a-zA-Z0-9' < /dev/urandom | head -c 40)
-			mkdir "/var/www/html/${RANDOM_CODE}"
-			echo "Directory created: ${RANDOM_CODE}"
-			echo "Folder created successfully!"
-			
-			 cd /var/www/html/
-			 wget -O wizwizpanel.zip https://github.com/wizwizdev/wizwizxui-timebot/releases/download/10.3.1/wizwizpanel.zip
-			
-			 file_to_transfer="/var/www/html/wizwizpanel.zip"
-			 destination_dir=$(find /var/www/html -type d -name "*${RANDOM_CODE}*" -print -quit)
-			
-			 if [ -z "$destination_dir" ]; then
-			   echo "Error: Could not find directory containing 'wiz' in '/var/www/html'"
-			   exit 1
-			 fi
-			
-			 mv "$file_to_transfer" "$destination_dir/" && yes | unzip "$destination_dir/wizwizpanel.zip" -d "$destination_dir/" && rm "$destination_dir/wizwizpanel.zip" && sudo chmod -R 755 "$destination_dir/" && sudo chown -R www-data:www-data "$destination_dir/" 
-			
-			
-			wait
+        if ! rm -rf /var/www/html/wizwizxui-timebot/; then
+            echo -e "\e[41mError: Failed to remove old bot directory. Check permissions.\033[0m"
+            exit 1
+        fi
 
+        if ! git clone https://github.com/wizwizdev/wizwizxui-timebot.git /var/www/html/wizwizxui-timebot; then
+            echo -e "\e[41mError: Failed to clone repository. Check your internet connection.\033[0m"
+            exit 1
+        fi
 
-			echo -e "\n\e[92mUpdating ...\033[0m\n"
-			
-			bot_token=$(cat /var/www/html/wizwizxui-timebot/baseInfo.php | grep '$botToken' | cut -d"'" -f2)
-			bot_token2=$(cat /var/www/html/wizwizxui-timebot/baseInfo.php | grep '$botToken' | cut -d'"' -f2)
-			
-			filepath="/var/www/html/wizwizxui-timebot/baseInfo.php"
-			
-			bot_value=$(cat $filepath | grep '$admin =' | sed 's/.*= //' | sed 's/;//')
-			
-			MESSAGE="🕹 WizWiz panel has been successfully updated!"
+        sudo chown -R www-data:www-data /var/www/html/wizwizxui-timebot/
+        sudo chmod -R 755 /var/www/html/wizwizxui-timebot/
 
-			curl -s -X POST "https://api.telegram.org/bot${bot_token}/sendMessage" -d chat_id="${bot_value}" -d text="$MESSAGE"
-			curl -s -X POST "https://api.telegram.org/bot${bot_token2}/sendMessage" -d chat_id="${bot_value}" -d text="$MESSAGE"
-			
-			sleep 1
-			
-			if [ $? -ne 0 ]; then
-			echo -e "\n\e[41mError: The update failed!\033[0m\n"
-			exit 1
-			else
+        if [ -f /root/baseInfo.php ]; then
+            mv /root/baseInfo.php "$base_info_path"
+        else
+            echo -e "\e[41mError: baseInfo.php backup not found. Update aborted.\033[0m"
+            exit 1
+        fi
 
-			clear
+        # Extracting details from baseInfo.php
+        local db_name db_user db_pass bot_token bot_admin
+        db_name=$(grep '\$dbName' "$base_info_path" | cut -d"'" -f2)
+        db_user=$(grep '\$dbUserName' "$base_info_path" | cut -d"'" -f2)
+        db_pass=$(grep '\$dbPassword' "$base_info_path" | cut -d"'" -f2)
+        bot_token=$(grep '\$botToken' "$base_info_path" | cut -d"'" -f2)
+        bot_admin=$(grep '\$admin =' "$base_info_path" | sed 's/.*= //' | sed 's/;//')
 
-			echo -e ' '
-			      echo -e "\e[100mwizwiz panel:\033[0m"
-			      echo -e "\e[33maddres: \e[36mhttps://domain.com/${RANDOM_CODE}/login.php\033[0m"
-			      echo " "
-			      echo -e "\e[92mThe script was successfully updated!\033[0m\n"
-			fi
+        if [ -z "$bot_token" ] || [ -z "$bot_admin" ]; then
+            echo -e "\e[41mError: Missing bot token or admin ID in baseInfo.php. Update aborted.\033[0m"
+            exit 1
+        fi
 
+        local message="🤖 WizWiz robot has been successfully updated!\n\n"
+        message+="🔻Token: <code>${bot_token}</code>\n"
+        message+="🔻Admin: <code>${bot_admin}</code>\n"
+        message+="🔹DB Name: <code>${db_name}</code>\n"
+        message+="🔹DB User: <code>${db_user}</code>\n"
+        message+="🔹DB Pass: <code>${db_pass}</code>"
 
+        send_telegram_message "$bot_token" "$bot_admin" "$message"
 
+        echo -e "\n\e[92mThe script was successfully updated!\033[0m\n"
+    else
+        echo -e "\e[41mUpdate canceled.\033[0m\n"
+    fi
+}
 
-			else
-			  echo -e "\e[41mCancel the update.\033[0m\n"
-			fi
+# Display menu options
+display_menu() {
+    PS3=" Please Select Action: "
+    options=("Update bot" "Exit")
+    select opt in "${options[@]}"; do
+        case $opt in
+            "Update bot")
+                update_bot
+                break
+                ;;
+            "Exit")
+                echo "Exiting..."
+                break
+                ;;
+            *)
+                echo "Invalid option! Please select a valid action."
+                ;;
+        esac
+    done
+}
 
-			break ;;
-		"Backup")
-			echo " "
-			wait
-
-			(crontab -l ; echo "0 * * * * ./dbbackupwizwiz.sh") | sort - | uniq - | crontab -
-			
-			wget https://raw.githubusercontent.com/wizwizdev/wizwizxui-timebot/main/dbbackupwizwiz.sh | chmod +x dbbackupwizwiz.sh
-			./dbbackupwizwiz.sh
-   
-			wget https://raw.githubusercontent.com/wizwizdev/wizwizxui-timebot/main/dbbackupwizwiz.sh | chmod +x dbbackupwizwiz.sh
-			./dbbackupwizwiz.sh
-			
-			echo -e "\n\e[92m The backup settings have been successfully completed.\033[0m\n"
-
-			break ;;
-		"Delete")
-			echo " "
-			
-			wait
-			
-			passs=$(cat /root/confwizwiz/dbrootwizwiz.txt | grep '$pass' | cut -d"'" -f2)
-   			userrr=$(cat /root/confwizwiz/dbrootwizwiz.txt | grep '$user' | cut -d"'" -f2)
-			pathsss=$(cat /root/confwizwiz/dbrootwizwiz.txt | grep '$path' | cut -d"'" -f2)
-			pathsss=$(cat /root/confwizwiz/dbrootwizwiz.txt | grep '$path' | cut -d"'" -f2)
-			passsword=$(cat /var/www/html/wizwizxui-timebot/baseInfo.php | grep '$dbPassword' | cut -d"'" -f2)
-   			userrrname=$(cat /var/www/html/wizwizxui-timebot/baseInfo.php | grep '$dbUserName' | cut -d"'" -f2)
-			
-			mysql -u $userrr -p$passs -e "DROP DATABASE wizwiz;" -e "DROP USER '$userrrname'@'localhost';" -e "DROP USER '$userrrname'@'%';"
-
-			sudo rm -r /var/www/html/wizpanel${pathsss}
-			sudo rm -r /var/www/html/wizwizxui-timebot
-			
-			clear
-			
-			sleep 1
-			
-			(crontab -l | grep -v "messagewizwiz.php") | crontab -
-			(crontab -l | grep -v "rewardReport.php") | crontab -
-			(crontab -l | grep -v "warnusers.php") | crontab -
-			(crontab -l | grep -v "backupnutif.php") | crontab -
-			
-			echo -e "\n\e[92m Removed successfully.\033[0m\n"
-			break ;;
-		"Donate")
-			echo " "
-			echo -e "\n\e[91mBank ( 1212 ): \e[36m1212\033[0m\n\e[91mTron(trx): \e[36mTY8j7of18gbMtneB8bbL7SZk5gcntQEemG\n\e[91mBitcoin: \e[36mbc1qcnkjnqvs7kyxvlfrns8t4ely7x85dhvz5gqge4\033[0m\n"
-			exit 0
-			break ;;
-		"Exit")
-			echo " "
-			break
-			;;
-			*) echo "Invalid option!"
-	esac
-done
+# Main execution
+check_root
+display_menu
